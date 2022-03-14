@@ -5,6 +5,8 @@ import pyttsx3
 from gtts import gTTS
 from playsound import playsound
 import time
+import threading
+from threading import Thread
 
 # udskift pyttsx3 ud med gtts
 
@@ -24,6 +26,8 @@ import time
 # derfor skal jeg kombinere mit
 # gamle projekt fra IDS og koble den sammen
 # med gTTS
+
+engine = pyttsx3.init()
 
 
 class handTracker():
@@ -62,11 +66,20 @@ class handTracker():
 
         return lmlist
 
+# denne her del af koden skal redigeres
+def voice(engine):
+    engine.say("Hello")
+    engine.runAndWait()
+
+
+def speak(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
 
 def main():
     cap = cv.VideoCapture(0)
     tracker = handTracker()
-
     folderPath = "C:/Users/Abdi/Downloads/DivingHandSigns/DivingHandSigns"
     myList = os.listdir(folderPath)
     #print(myList)
@@ -93,38 +106,70 @@ def main():
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 image [0:120, 0:120] = overlayList[0]
                 # print("Thumbs up/Closed fist")
-                #engine = pyttsx3.init()
                 #engine.say("Thumbs up")
                 #engine.runAndWait()
+                #voice("Thumbs up")
 
                 #mytext = "Thumbs up"
                 #language = 'en'
                 #myobj = gTTS(text=mytext, lang=language, slow=False)
                 #myobj.save("thumbsup.mp3")
                 #os.system("thumbsup.mp3")
-                playsound("C:/Users/Abdi/welcome.mp3")
+                #playsound("C:/Users/Abdi/welcome.mp3")
+
+                speech = "Thumbs up"
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
 
             # The "OK sign" statement
 
             if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 image [0:120, 0:120] = overlayList[1]
                 # print("OK sign")
-                #engine = pyttsx3.init()
                 #engine.say("Ok sign")
                 #engine.runAndWait()
+                #playsound("")
+                #voice("Ok sign")
+
+                speech = "Ok sign"
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
 
             # The "Stop sign" statement
 
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 image [0:120, 0:120] = overlayList[2]
                 # print("Stop sign")
-                #engine = pyttsx3.init()
                 #engine.say("Stop sign")
                 #engine.runAndWait()
+                #playsound("")
+                #voice("Stop sign")
+
+                speech = "Stop sign"
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
+
+            # peace sign
+
+            #if lmList[8][2]  lmList[6][2] and lmList[12][2]  lmList[10][2] and lmList[16][2]  lmList[14][2] and lmList[20][2]  lmList[18][2]:
+                #image [0:120, 0:120] = overlayList[3]
+                # print("Peace sign")
+                #engine.say("Peace sign")
+                #engine.runAndWait()
+                #voice("Peace sign")
 
         cv.imshow("Video", image)
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
+
+    # denne her while loop skal afsluttes med noget destruktion
+    engine.stop()
+    cap.release()
+    cv.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
