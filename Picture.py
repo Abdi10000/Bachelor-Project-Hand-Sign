@@ -8,6 +8,7 @@ from kivy.uix.label import Label
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
 from kivy.logger import Logger
+from kivy.lang.builder import Builder
 
 
 # OpenCV dependencies
@@ -39,7 +40,6 @@ engine = pyttsx3.init()
 
 # converting sound to bytes
 voiceOver = BytesIO()
-
 
 
 # en klasse der bruges til at opfange hånden ved brug af mediapipe
@@ -137,11 +137,11 @@ class CampApp(App):
         layout.add_widget(self.exitButton)
 
         # tilføj tilbage knap
-        self.backButton = Button(text="Back Button", size_hint=(1,.1))
+        #self.backButton = Button(text="Back Button", size_hint=(1,.1))
 
         # Bind the Button
-        self.backButton.bind(on_press=self.pressBack)
-        layout.add_widget(self.backButton)
+        #self.backButton.bind(on_press=self.pressBack)
+        #layout.add_widget(self.backButton)
 
         return layout
 
@@ -155,9 +155,10 @@ class CampApp(App):
         CampApp.stop()
 
 
-    def pressBack(self, instance):
-        print("The button works")
+    #def pressBack(self, instance):
+    #    print("The button works")
         # knappen mangler at blive tilføjet
+        # byt knappen ud med speech-to-text
 
 
 
@@ -193,6 +194,12 @@ class CampApp(App):
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[0]
                 speech = "Hey"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
@@ -201,6 +208,12 @@ class CampApp(App):
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[1]
                 speech = "Yes"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
@@ -209,6 +222,12 @@ class CampApp(App):
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[2]
                 speech = "No"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
@@ -217,6 +236,12 @@ class CampApp(App):
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[3]
                 speech = "Maybe"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
@@ -228,14 +253,27 @@ class CampApp(App):
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[4]
                 speech = "What is your name?"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
+            # billedet skal skiftes ud. Men hånd tegnen virker
             # Farvel - 5 - Done - Den virker
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[5]
                 speech = "Goodbye"
+
+                buffer = cv.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
                 #cv.rectangle(frame, (100, 100), (300, 300), (0, 255, 255), cv.FILLED)
