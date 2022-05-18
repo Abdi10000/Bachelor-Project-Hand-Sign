@@ -1,5 +1,4 @@
 # Kivy dependencies
-
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
@@ -8,38 +7,22 @@ from kivy.uix.label import Label
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
 from kivy.logger import Logger
+from kivy.lang.builder import Builder
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.gridlayout import GridLayout
 
 
-# OpenCV dependencies
-import cv2 as cv
-import tensorflow as tf
-import os
-import numpy as np
-
-import handTrackingModule
-
-
+# Prototype dependencies
 import cv2 as cv
 import mediapipe as mp
 import os
 import pyttsx3
 import threading
-import application
-from kivy.uix.label import Label
-
-from gtts import gTTS
-from io import BytesIO
-import pyglet
-from playsound import playsound
-
+import speech_recognition as sr
 
 
 # variable for outputting the audio
 engine = pyttsx3.init()
-
-# converting sound to bytes
-voiceOver = BytesIO()
-
 
 
 # en klasse der bruges til at opfange hånden ved brug af mediapipe
@@ -76,7 +59,7 @@ class handTracker():
                 lmlist.append([id, cx, cy])
             if draw:
                 # cv.circle skal fjernes
-                cv.circle(image, (cx, cy), 15, (255, 0, 255), cv.FILLED)
+                cv.circle(image, (cx, cy), 4, (255, 205, 195), cv.FILLED)
                 #cv.rectangle(image, (h, w), (300, 300), (0, 255, 255), cv.FILLED)
 
         return lmlist
@@ -88,22 +71,19 @@ def speak(audio):
     engine.runAndWait()
 
 
-
-
 # Build app and layout
 class CampApp(App):
 
     def build(self):
         # Main layout components
         self.image = Image(size_hint=(1, .8))
-        #self.button = Button(text="Verify", size_hint=(1,.1))
-        #self.verification = Label(text="Verification Uninitialized", size_hint=(1,.1))
+        #self.speech = Label(text="hello", size_hint=(1, .1))
 
         # Add items to layout
+        global layout
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(self.image)
-        #layout.add_widget(self.button)
-        #layout.add_widget(self.verification)
+        #layout.add_widget(self.speech)
 
 
         # Setup video capture device
@@ -115,9 +95,16 @@ class CampApp(App):
         # variablen for at anvende handTracker class
         global tracker
         tracker = handTracker()
-        folderPath = "C:/Users/Abdi/Downloads/Hands/HandSignList"
+
+
+        # Hvad er %(source.dir)s/Pictures
+
+        # denne her path skal ændres når den indsættes på appen
+        folderPath = "C:/Users/Abdi/PycharmProjects/pythonProject/Pictures"
+        #folderPath = "Pictures"
         myList = os.listdir(folderPath)
         # print(myList)
+
 
         # denne array indeholder listen af hånd tegn billeder
         global overlayList
@@ -129,6 +116,21 @@ class CampApp(App):
             detector = handTracker(detectionCon=0.75)
 
 
+        # Speech-to-text button
+        self.voiceButton = Button(text="Speech-To-Text Button", size_hint=(1,.1))
+
+
+
+
+        # Bind the Button
+        self.voiceButton.bind(on_press=self.pressVoice)
+        layout.add_widget(self.voiceButton)
+
+        # koderne nedenunder virker ikke
+        #handleVoice = threading.Thread(target=pressVoice, args=(,)
+        #handleVoice.start()
+
+
         # Exit button
         self.exitButton = Button(text="Exit Button", font_size=32, size_hint=(1,.1), background_color=(1, 0, 0, 1))
 
@@ -136,12 +138,9 @@ class CampApp(App):
         self.exitButton.bind(on_press=self.pressExit)
         layout.add_widget(self.exitButton)
 
-        # tilføj tilbage knap
-        self.backButton = Button(text="Back Button", size_hint=(1,.1))
 
-        # Bind the Button
-        self.backButton.bind(on_press=self.pressBack)
-        layout.add_widget(self.backButton)
+        # Label for speech-to-text
+
 
         return layout
 
@@ -150,14 +149,76 @@ class CampApp(App):
 
 
     def pressExit(self, instance):
-        # print("Exit knap aktiveret")
-        self.background_color = (1, 0, 1, 1)  # skal måske fjernes
+        #self.background_color = (1, 0, 1, 1)  # skal måske fjernes
+        #self.add_widget(Label(text="The app is shutting down"))
+        layout.add_widget(Label(text="The app is shutting down"))
         CampApp.stop()
+        # tilføj ja/nej funktion
 
 
-    def pressBack(self, instance):
-        print("The button works")
-        # knappen mangler at blive tilføjet
+    # koden her skal sikkert placeres i sit eget fil
+    # dvs. importer koden fra filen kaldet speak.py
+
+
+    # fix threading på denne funktion
+    # function for speech-to-text
+    def pressVoice(self, instance):
+        layout.add_widget(Label(text="Speech-to-text transcription is activated"))
+        print("Speech-to-text transcription is activated")
+        layout.add_widget(Label(text="You can speak now:"))
+
+        # s = input("Enter the time in seconds: ")
+
+        r = sr.Recognizer()
+
+        with sr.Microphone() as source:
+            #layout.add_widget(Label(text="You can speak now:"))
+            print("You can speak now:")
+
+            # makes sure outside sound are not contaminating the voice recognition
+            r.adjust_for_ambient_noise(source)
+
+            try:
+                # read the audio data from the microphone
+                # records the user. the user can choose the length/duration
+
+                # audio_data = r.record(source, duration=int(s))
+                audio_data = r.record(source, duration=10)
+                print("Recognizing...")
+                #self.add_widget(Label(text="Recognizing..."))
+                layout.add_widget(Label(text="Recognizing..."))
+
+                # listens for the user's input
+                # programming stops when user stops talking
+                # audio = r.listen(source)
+                #audio = r.listen(audio_data)
+
+                # convert speech to text
+                # text = r.recognize_google(audio_data, language="da-DK")
+                global textSpeech
+                textSpeech = r.recognize_google(audio_data, language="da-DK")
+                print(textSpeech)
+                #self.add_widget(Label(text=textSpeech))
+                layout.add_widget(Label(text=textSpeech))
+
+                # tilføj label tekst herunder
+                #self.add_widget(Label(text=textSpeech))
+
+                #handleVoice = threading.Thread(target=pressVoice, args=(,))
+                #handleVoice.start()
+
+
+            # måske skal den her error fjernes
+            except sr.RequestError:
+                print("Voice was not recognized")
+                #self.add_widget(Label(text="Voice was not recognized"))
+                layout.add_widget(Label(text="Voice was not recognized"))
+
+
+            except sr.UnknownValueError:
+                print("Error")
+                #self.add_widget(Label(text="Error"))
+                layout.add_widget(Label(text="Error"))
 
 
 
@@ -166,6 +227,8 @@ class CampApp(App):
 
         # Read frame from opencv
         ret, frame = self.capture.read()
+
+        frame = cv.flip(frame, 1)
 
         self.image_frame = frame
 
@@ -185,68 +248,185 @@ class CampApp(App):
         #
         lmList = tracker.positionFinder(track)
 
-
         #
         if len(lmList) != 0:
 
-            # Lukket hånd - 0 - Done -
+            # Lukket hånd
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[0]
-                speech = "Hey"
+                speech = "Hello"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
-            # Ja - 1 - Done -
+            #
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[1]
-                speech = "Yes"
+                speech = "Goodbye"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
-            # Nej - 2 - Done -
+            #
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[2]
-                speech = "No"
+                speech = "Thank you"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
-            # Måske - 3 - Done -
+            #
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[3]
-                speech = "Maybe"
+                speech = "Can you help me"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
-            # Hvad hedder du - 4 - Done -
-            #if lmList[0][2] > lmList[1][2] and
-            #if lmList[0][2] < lmList[1][2] and
-
+            #
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[4]
-                speech = "What is your name?"
+                speech = "I want to buy"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
 
 
-            # Farvel - 5 - Done - Den virker
+            #
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[5]
-                speech = "Goodbye"
+                speech = "How do i find"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
                 t_handle = threading.Thread(target=speak, args=(speech,))
                 t_handle.start()
-                #cv.rectangle(frame, (100, 100), (300, 300), (0, 255, 255), cv.FILLED)
-                #cv.putText(frame, speech, (400, 400), cv.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 4, cv.LINE_AA)
 
 
-            #tilføj flere fingrer kommandoer
+            #
+            if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
+                frame[0:120, 0:120] = overlayList[6]
+                speech = "I am deaf"
 
-            # Ord?
-            #if lmList
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
+
+            #
+            if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
+                frame[0:120, 0:120] = overlayList[7]
+                speech = "Can you repeat"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
+
+            #
+            if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
+                frame[0:120, 0:120] = overlayList[8]
+                speech = "okay"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
+
+            #
+            if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
+                frame[0:120, 0:120] = overlayList[9]
+                speech = "stop"
+
+                alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 4, lineType=cv.LINE_AA)
+
+                buffer = cv.flip(alphabet, 0).tostring()
+                texture = Texture.create(size=(alphabet.shape[1], alphabet.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.image.texture = texture
+
+                t_handle = threading.Thread(target=speak, args=(speech,))
+                t_handle.start()
+
 
 
 if __name__ == '__main__':
-    CampApp().run()
+    app = CampApp()
+    app.run()
+
+    #CampApp().run()
+
+
+# funktion til at konverter fra image/opencv til kivy
+def convert(insert):
+    buffer = "hello"
+    print(buffer)
+    print(insert)
+    print("This function is not active")
+
+
+    # hvad sker der hvis koden buffer = cv.flip(frame, 0).tostring() bliver fjernet
+    # vi har fjernet tommelfinger i vores program, da det er problematisk at arbejde med det
+    # tilføj ja/nej funktion når man skal gå ud af appen
