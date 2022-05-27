@@ -25,7 +25,6 @@ import os
 import pyttsx3
 import threading
 import speech_recognition as sr
-#import speak
 
 
 # variablen for outputting the audio
