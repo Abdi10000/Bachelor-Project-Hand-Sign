@@ -31,9 +31,6 @@ import speech_recognition as sr
 # variablen for outputting the audio
 engine = pyttsx3.init()
 
-# den skal fjernes
-#speech = speak
-
 
 # en klasse der bruges til at opfange hånden ved brug af mediapipe
 class handTracker():
@@ -82,7 +79,7 @@ def speak(audio):
     engine.say(audio)
     engine.runAndWait()
 
-
+# funktion for threading
 # Threading funktion der gør at koden kører uden afbrydelser
 def fasterCode(input, argument):
     handling = threading.Thread(target=input, args=(argument,))
@@ -90,12 +87,13 @@ def fasterCode(input, argument):
 
 
 
-# Build app and layout
+
+
+
 class MainApp(App):
 
     def build(self):
 
-        # Main layout components
         global layout
         layout = BoxLayout(orientation='vertical')
 
@@ -103,8 +101,7 @@ class MainApp(App):
 
         layout.add_widget(self.image)
 
-        # Setup video capture device
-        # The size of webcamera screen
+
         self.capture = cv.VideoCapture(0)
         Clock.schedule_interval(self.signTracking, 1.0 / 33.0)
 
@@ -129,7 +126,7 @@ class MainApp(App):
         global tracker
         tracker = handTracker()
 
-        #
+        # kode der fører til filen med billeder
         folderPath = "Pictures"
         myList = os.listdir(folderPath)
         # print(myList)
@@ -152,31 +149,25 @@ class MainApp(App):
     def pressExit(self, instance):
         layout.add_widget(Label(text="The app is shutting down"))
         MainApp.stop()
-        # tilføj ja/nej funktion
 
 
-    #
-    def fasterCode(function, output):
-        handle = threading.Thread(target=function, args=(output,))
-        handle.start()
 
-
-    # function for speech-to-text
+    # funktion for speech-to-text
     def pressVoice(self, instance):
 
         print("Speech-to-text transcription is activated")
         layout.add_widget(Label(text="Speech-to-text transcription is activated"))
         layout.add_widget(Label(text="You can speak now:"))
 
-        #
+
         r = sr.Recognizer()
 
-        #
+
         with sr.Microphone() as source:
             print("You can speak now:")
             layout.add_widget(Label(text="You can speak now:"))
 
-            # makes sure outside sound are not contaminating the voice recognition
+            # Denne linje kode gør at andre lyde ikke påvirker stemmegenkendelse
             r.adjust_for_ambient_noise(source)
 
             try:
@@ -186,60 +177,55 @@ class MainApp(App):
                 print("Recognizing...")
                 layout.add_widget(Label(text="Recognizing..."))
 
-                # convert speech to text
+                # Konverter speech to text
                 global textSpeech
                 textSpeech = r.recognize_google(audio_data, language="da-DK")
                 print(textSpeech)
                 layout.add_widget(Label(text=textSpeech))
 
 
-            #
+
             except sr.RequestError:
                 print("Voice was not recognized")
                 #self.add_widget(Label(text="Voice was not recognized"))
                 layout.add_widget(Label(text="Voice was not recognized"))
 
 
-            #
+
             except sr.UnknownValueError:
                 print("Error")
                 layout.add_widget(Label(text="Error"))
 
 
 
-    # Run continuously to get webcam feed
     # Denne funktion bruges til at kombinere OpenCV med Kivy
     def signTracking(self, *args):
 
-        # Read frame from opencv
+
         ret, frame = self.capture.read()
 
-        #
+        # Flipper webkameraet
         frame = cv.flip(frame, 1)
 
-        #
+
         self.image_frame = frame
 
-        #
+
         track = tracker.handsFinder(frame)
 
-        # Flip horizontal and convert image to texture
+        # Konverter image til texture
         buffer = cv.flip(frame, 0).tostring()
         texture = Texture.create(size=(track.shape[1], track.shape[0]), colorfmt='bgr')
         texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
         self.image.texture = texture
 
 
-        # flips the camera and makes sure that the webcam is not inverted(spejlvendt)
-        #image = cv.flip(image, 1)
-
-        #
         lmList = tracker.positionFinder(track)
 
-        #
+
         if len(lmList) != 0:
 
-            #
+
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[0]
                 speech = "Hello"
@@ -254,7 +240,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[1]
                 speech = "Goodbye"
@@ -269,7 +255,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[2]
                 speech = "Thank you"
@@ -284,7 +270,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[3]
                 speech = "Can you help me"
@@ -299,7 +285,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[4]
                 speech = "I want to buy"
@@ -313,7 +299,7 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[5]
                 speech = "How do i find"
@@ -328,7 +314,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[6]
                 speech = "I am deaf"
@@ -343,7 +329,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[7]
                 speech = "Can you repeat"
@@ -358,7 +344,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[8]
                 speech = "okay"
@@ -373,7 +359,7 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-            #
+
             if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[9]
                 speech = "stop"
@@ -391,17 +377,3 @@ class MainApp(App):
 if __name__ == '__main__':
     app = MainApp()
     app.run()
-
-
-
-    # måske skal denne funktion fjernes
-    # funktion til at konverter fra image/opencv til kivy
-    def convert(self, insert):
-        buffer = cv.flip(insert, 0).tostring()
-        texture = Texture.create(size=(insert.shape[1], insert.shape[0]), colorfmt='bgr')
-        texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
-        self.image.texture = texture
-
-        # hvad sker der hvis koden buffer = cv.flip(frame, 0).tostring() bliver fjernet
-        # vi har fjernet tommelfinger i vores program, da det er problematisk at arbejde med det
-        # tilføj ja/nej funktion når man skal gå ud af appen
