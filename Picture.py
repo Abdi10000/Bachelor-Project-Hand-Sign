@@ -172,13 +172,13 @@ class MainApp(App):
             try:
                 # read the audio data from the microphone
                 # records the user. the user can choose the length/duration
-                audio_data = r.record(source, duration=10)
+                audio = r.record(source, duration=10)
                 print("Recognizing...")
                 layout.add_widget(Label(text="Recognizing..."))
 
-                # Konverter speech to text
+                # Konverterer tale til tekst
                 global textSpeech
-                textSpeech = r.recognize_google(audio_data, language="da-DK")
+                textSpeech = r.recognize_google(audio, language="da-DK")
                 print(textSpeech)
                 layout.add_widget(Label(text=textSpeech))
 
