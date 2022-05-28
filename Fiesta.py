@@ -1,8 +1,10 @@
-# Programmet er udviklet af Projektgruppen: Tegnsprog til lyd
+# Programmet er udviklet af Projektgruppen:
 # Medlemmerne består af Abdi, Michael og Kristina
 # Dato 01/06-2022
 
-# Koden er en applikation der indeholder funktioner for at brugeren kan holde en samtale den inkludere oversættelse af håndtegn til tale 
+# Koden er en applikation der indeholder funktioner
+# for at brugeren kan holde en samtale
+# den inkludere oversættelse af håndtegn til tale
 # og optagelse af stemme der transskriberes til tekst
 
 
@@ -25,14 +27,14 @@ import threading
 import speech_recognition as sr
 
 
-# Variable for outputting the audio
+# variablen for outputting the audio
 engine = pyttsx3.init()
 
 
-# En klasse der bruges til at opfange hånden ved brug af mediapipe
+# en klasse der bruges til at opfange hånden ved brug af mediapipe
 class handTracker():
 
-    # En funktion der bruges til at opfange hånd ved brug af mediapipe
+    # en funktion der bruges til at opfange hånden ved brug af mediapipe
     def __init__(self, mode=False, maxHands=1, detectionCon=0.5, modelComplexity=1, trackCon=0.5):
         self.mode = mode
         self.maxHands = maxHands
@@ -44,7 +46,7 @@ class handTracker():
         self.mpDraw = mp.solutions.drawing_utils
 
 
-    # Funktion der tegner og finder hånden
+    # funktion der tegner og finder hånden
     def handsFinder(self, image, draw=True):
         imageRGB = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         self.results = self.hands.process(imageRGB)
@@ -56,7 +58,7 @@ class handTracker():
         return image
 
 
-    # Funktion der beregner og viser positioner på hånd
+    # funktion der beregner og viser positioner på hånden
     def positionFinder(self, image, handNo=0, draw=True):
         lmlist = []
         if self.results.multi_hand_landmarks:
@@ -71,15 +73,19 @@ class handTracker():
         return lmlist
 
 
-# Højtaler funktionen
+# højtaler funktionen
 def speak(audio):
     engine.say(audio)
     engine.runAndWait()
 
+# funktion for threading
 # Threading funktion der gør at koden kører uden afbrydelser
 def fasterCode(input, argument):
     handling = threading.Thread(target=input, args=(argument,))
     handling.start()
+
+
+
 
 
 
@@ -99,33 +105,33 @@ class MainApp(App):
         Clock.schedule_interval(self.signTracking, 1.0 / 33.0)
 
 
-        # Speech-to-text knap
+        # Speech-to-text button
         self.voiceButton = Button(text="Speech-To-Text Button", size_hint=(1,.1))
 
-        # Binder Speech-to-Text knap
+        # Bind the Speech-To-Text Button
         self.voiceButton.bind(on_press=self.pressVoice)
         layout.add_widget(self.voiceButton)
 
 
-        # Exit knap
+        # Exit button
         self.exitButton = Button(text="Exit Button", font_size=32, size_hint=(1,.1), background_color=(1, 0, 0, 1))
 
-        # Binder Exit knappen
+        # Bind the Exit Button
         self.exitButton.bind(on_press=self.pressExit)
         layout.add_widget(self.exitButton)
 
 
-        # Variable for at anvende handTracker class
+        # variablen for at anvende handTracker class
         global tracker
         tracker = handTracker()
 
-        # Kode der fører til filen med billeder
+        # kode der fører til filen med billeder
         folderPath = "Pictures"
         myList = os.listdir(folderPath)
         # print(myList)
 
 
-        # Denne array indeholder listen af håndtegn billeder
+        # denne array indeholder listen af hånd tegn billeder
         global overlayList
         overlayList = []
         for imagePath in myList:
@@ -137,13 +143,15 @@ class MainApp(App):
         return layout
 
 
-    # Funktion for når du trykker på knappen vil du afslutte appen.
+    # funktion for når du trykker på knappen
+    # så vil du exit appen
     def pressExit(self, instance):
         layout.add_widget(Label(text="The app is shutting down"))
         MainApp.stop()
 
 
-    # Funktion for speech-to-text
+
+    # funktion for speech-to-text
     def pressVoice(self, instance):
 
         print("Speech-to-text transcription is activated")
@@ -176,15 +184,18 @@ class MainApp(App):
                 layout.add_widget(Label(text=textSpeech))
 
 
+
             except sr.RequestError:
                 print("Voice was not recognized")
                 #self.add_widget(Label(text="Voice was not recognized"))
                 layout.add_widget(Label(text="Voice was not recognized"))
 
 
+
             except sr.UnknownValueError:
                 print("Error")
                 layout.add_widget(Label(text="Error"))
+
 
 
     # Denne funktion bruges til at kombinere OpenCV med Kivy
@@ -202,7 +213,7 @@ class MainApp(App):
 
         track = tracker.handsFinder(frame)
 
-        # Konvertere image til texture
+        # Konverter image til texture
         buffer = cv.flip(frame, 0).tostring()
         texture = Texture.create(size=(track.shape[1], track.shape[0]), colorfmt='bgr')
         texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
@@ -213,7 +224,10 @@ class MainApp(App):
 
 
         if len(lmList) != 0:
-            
+
+
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve
+            # så vil programmet output ordet "hello" fra højtaleren
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[0]
                 speech = "Hello"
@@ -228,7 +242,8 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover pegefingeren
+            # så vil programmet output ordet "goodbye" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[1]
                 speech = "Goodbye"
@@ -242,8 +257,8 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover pegefingeren
+            # og langfingeren så vil programmet output sætningen "thank you" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[2]
                 speech = "Thank you"
@@ -257,8 +272,8 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover pegefingeren
+            # mellemfineren og ringefingeren så vil programmet output sætningen "Can you help me" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[3]
                 speech = "Can you help me"
@@ -273,7 +288,8 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
-
+            # Denne if-statement gør at når brugerens fire fingre er foldet ud
+            # så vil programmet output sætningen "I want to buy" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[4]
                 speech = "I want to buy"
@@ -288,6 +304,8 @@ class MainApp(App):
                 fasterCode(speak, speech)
 
 
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover pegefingeren
+            # og lillefingeren så vil programmet output sætningen "How do i find" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[5]
                 speech = "How do i find"
@@ -301,8 +319,8 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover mellemfingeren
+            # og ringfingeren så vil programmet output sætningen "I am deaf" fra højtaleren
             if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[6]
                 speech = "I am deaf"
@@ -316,8 +334,8 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover lillefingeren
+            # så vil programmet output sætningen "Can you repeat" fra højtaleren
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[7]
                 speech = "Can you repeat"
@@ -331,11 +349,11 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover pegefingeren,
+            # ringfingeren og lillefingeren så vil programmet output ordet "okay" fra højtaleren
             if lmList[8][2] < lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[8]
-                speech = "okay"
+                speech = "Okay"
 
                 alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (25, 255, 255), 4, lineType=cv.LINE_AA)
 
@@ -346,11 +364,11 @@ class MainApp(App):
 
                 fasterCode(speak, speech)
 
-
-
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve udover mellemfingeren,
+            # ringfingeren og lillefingeren så vil programmet output ordet "Stop" fra højtaleren
             if lmList[8][2] > lmList[6][2] and lmList[12][2] < lmList[10][2] and lmList[16][2] < lmList[14][2] and lmList[20][2] < lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[9]
-                speech = "stop"
+                speech = "Stop"
 
                 alphabet = cv.putText(frame, speech, (0, 450), cv.FONT_HERSHEY_SIMPLEX, 2, (25, 255, 255), 4, lineType=cv.LINE_AA)
 
