@@ -1,10 +1,8 @@
-# Programmet er udviklet af Projektgruppen:
+# Programmet er udviklet af Projektgruppen: Tegnsprog til lyd
 # Medlemmerne består af Abdi, Michael og Kristina
 # Dato 01/06-2022
 
-# Koden er en applikation der indeholder funktioner
-# for at brugeren kan holde en samtale
-# den inkludere oversættelse af håndtegn til tale
+# Koden er en applikation der indeholder funktioner for at brugeren kan holde en samtale den inkludere oversættelse af håndtegn til tale
 # og optagelse af stemme der transskriberes til tekst
 
 
@@ -27,14 +25,14 @@ import threading
 import speech_recognition as sr
 
 
-# variablen for outputting the audio
+# Variablen for outputting the audio
 engine = pyttsx3.init()
 
 
-# en klasse der bruges til at opfange hånden ved brug af mediapipe
+# En klasse der bruges til at opfange hånden ved brug af mediapipe
 class handTracker():
 
-    # en funktion der bruges til at opfange hånden ved brug af mediapipe
+    # En funktion der bruges til at opfange hånden ved brug af mediapipe
     def __init__(self, mode=False, maxHands=1, detectionCon=0.5, modelComplexity=1, trackCon=0.5):
         self.mode = mode
         self.maxHands = maxHands
@@ -46,7 +44,7 @@ class handTracker():
         self.mpDraw = mp.solutions.drawing_utils
 
 
-    # funktion der tegner og finder hånden
+    # Funktion der tegner og finder hånden
     def handsFinder(self, image, draw=True):
         imageRGB = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         self.results = self.hands.process(imageRGB)
@@ -58,7 +56,7 @@ class handTracker():
         return image
 
 
-    # funktion der beregner og viser positioner på hånden
+    # Funktion der beregner og viser positioner på hånden
     def positionFinder(self, image, handNo=0, draw=True):
         lmlist = []
         if self.results.multi_hand_landmarks:
@@ -73,18 +71,15 @@ class handTracker():
         return lmlist
 
 
-# højtaler funktionen
+# Højtaler funktionen
 def speak(audio):
     engine.say(audio)
     engine.runAndWait()
 
-# funktion for threading
 # Threading funktion der gør at koden kører uden afbrydelser
 def fasterCode(input, argument):
     handling = threading.Thread(target=input, args=(argument,))
     handling.start()
-
-
 
 
 
@@ -105,33 +100,33 @@ class MainApp(App):
         Clock.schedule_interval(self.signTracking, 1.0 / 33.0)
 
 
-        # Speech-to-text button
+        # Speech-to-text knap
         self.voiceButton = Button(text="Speech-To-Text Button", size_hint=(1,.1))
 
-        # Bind the Speech-To-Text Button
+        # Binder Speech-To-Text knap
         self.voiceButton.bind(on_press=self.pressVoice)
         layout.add_widget(self.voiceButton)
 
 
-        # Exit button
+        # Exit knap
         self.exitButton = Button(text="Exit Button", font_size=32, size_hint=(1,.1), background_color=(1, 0, 0, 1))
 
-        # Bind the Exit Button
+        # Binder Exit knap
         self.exitButton.bind(on_press=self.pressExit)
         layout.add_widget(self.exitButton)
 
 
-        # variablen for at anvende handTracker class
+        # Variablen for at anvende handTracker class
         global tracker
         tracker = handTracker()
 
-        # kode der fører til filen med billeder
+        # Kode der fører til filen med billeder
         folderPath = "Pictures"
         myList = os.listdir(folderPath)
         # print(myList)
 
 
-        # denne array indeholder listen af hånd tegn billeder
+        # Denne array indeholder listen af hånd tegn billeder
         global overlayList
         overlayList = []
         for imagePath in myList:
@@ -143,15 +138,13 @@ class MainApp(App):
         return layout
 
 
-    # funktion for når du trykker på knappen
-    # så vil du exit appen
+    # Funktion for når du trykker på knappen så vil du exit appen
     def pressExit(self, instance):
         layout.add_widget(Label(text="The app is shutting down"))
         MainApp.stop()
 
 
-
-    # funktion for speech-to-text
+    # Funktion for speech-to-text
     def pressVoice(self, instance):
 
         print("Speech-to-text transcription is activated")
@@ -191,7 +184,6 @@ class MainApp(App):
                 layout.add_widget(Label(text="Voice was not recognized"))
 
 
-
             except sr.UnknownValueError:
                 print("Error")
                 layout.add_widget(Label(text="Error"))
@@ -226,8 +218,7 @@ class MainApp(App):
         if len(lmList) != 0:
 
 
-            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve
-            # så vil programmet output ordet "hello" fra højtaleren
+            # Denne if-statement gør at når brugerens hånd er foldet til en knytnæve så vil programmet output ordet "hello" fra højtaleren
             if lmList[8][2] > lmList[6][2] and lmList[12][2] > lmList[10][2] and lmList[16][2] > lmList[14][2] and lmList[20][2] > lmList[18][2]:
                 frame[0:120, 0:120] = overlayList[0]
                 speech = "Hello"
